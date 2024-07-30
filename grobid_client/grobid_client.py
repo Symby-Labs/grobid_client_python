@@ -314,13 +314,13 @@ class GrobidClient(ApiClient):
         service,
         pdf_handle,
         pdf_name,
-        generateIDs,
-        consolidate_header,
-        consolidate_citations,
-        include_raw_citations,
-        include_raw_affiliations,
-        tei_coordinates,
-        segment_sentences
+        generateIDs=False,
+        consolidate_header=True,
+        consolidate_citations=False,
+        include_raw_citations=False,
+        include_raw_affiliations=False,
+        tei_coordinates=False,
+        segment_sentences=False
     ):
         files = {
             "input": (
