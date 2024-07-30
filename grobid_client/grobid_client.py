@@ -313,6 +313,7 @@ class GrobidClient(ApiClient):
         self,
         service,
         pdf_handle,
+        pdf_name,
         generateIDs,
         consolidate_header,
         consolidate_citations,
@@ -323,7 +324,7 @@ class GrobidClient(ApiClient):
     ):
         files = {
             "input": (
-                pdf_handle.name,
+                pdf_name,
                 pdf_handle,
                 "application/pdf",
                 {"Expires": "0"},
@@ -369,10 +370,10 @@ class GrobidClient(ApiClient):
                 )
         except requests.exceptions.ReadTimeout:
             pdf_handle.close()
-            return (pdf_handle.name, 408, None)
+            return (pdf_name, 408, None)
 
         pdf_handle.close()
-        return (pdf_handle.name, status, res.text)
+        return (pdf_name, status, res.text)
 
     def get_server_url(self, service):
         return self.config['grobid_server'] + "/api/" + service
