@@ -23,6 +23,7 @@ import concurrent.futures
 import ntpath
 import requests
 import pathlib
+from urllib.parse import urlparse
 
 from .client import ApiClient
 
@@ -245,48 +246,58 @@ class GrobidClient(ApiClient):
 
     def process_pdf(
         self,
-        service,
-        pdf_file,
-        generateIDs,
-        consolidate_header,
-        consolidate_citations,
-        include_raw_citations,
-        include_raw_affiliations,
-        tei_coordinates,
-        segment_sentences
+        service: str,
+        pdf_file: str,
+        generateIDs: bool,
+        consolidate_header: bool,
+        consolidate_citations: bool,
+        include_raw_citations: bool,
+        include_raw_affiliations: bool,
+        tei_coordinates: bool,
+        segment_sentences: bool
     ):
-        pdf_handle = open(pdf_file, "rb")
-        files = {
-            "input": (
-                pdf_file,
-                pdf_handle,
-                "application/pdf",
-                {"Expires": "0"},
-            )
-        }
+        data = {}
+        files = {}
+
+        try:
+            result = urlparse(pdf_file)
+            if result.scheme and result.netloc:
+                data["uploadFileURL"] = pdf_file
+        except AttributeError:
+            pass
+
+        if 'uploadFileURL' not in data:
+            pdf_handle = open(pdf_file, "rb")
+            files = {
+                "input": (
+                    pdf_file,
+                    pdf_handle,
+                    "application/pdf",
+                    {"Expires": "0"},
+                )
+            }
         
-        the_url = self.get_server_url(service)
+        url = self.get_server_url(service)
 
         # set the GROBID parameters
-        the_data = {}
         if generateIDs:
-            the_data["generateIDs"] = "1"
+            data["generateIDs"] = "1"
         if consolidate_header:
-            the_data["consolidateHeader"] = "1"
+            data["consolidateHeader"] = "1"
         if consolidate_citations:
-            the_data["consolidateCitations"] = "1"
+            data["consolidateCitations"] = "1"
         if include_raw_citations:
-            the_data["includeRawCitations"] = "1"
+            data["includeRawCitations"] = "1"
         if include_raw_affiliations:
-            the_data["includeRawAffiliations"] = "1"
+            data["includeRawAffiliations"] = "1"
         if tei_coordinates:
-            the_data["teiCoordinates"] = self.config["coordinates"]
+            data["teiCoordinates"] = self.config["coordinates"]
         if segment_sentences:
-            the_data["segmentSentences"] = "1"
+            data["segmentSentences"] = "1"
 
         try:
             res, status = self.post(
-                url=the_url, files=files, data=the_data, headers={"Accept": "text/plain"}, timeout=self.config['timeout']
+                url=url, files=files, data=data, headers={"Accept": "text/plain"}, timeout=self.config['timeout']
             )
 
             if status == 503:
