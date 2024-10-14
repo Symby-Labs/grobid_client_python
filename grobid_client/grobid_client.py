@@ -258,15 +258,17 @@ class GrobidClient(ApiClient):
     ):
         data = {}
         files = {}
+        headers = {"Accept": "text/plain"}
+        pdf_handle = None
 
         try:
             result = urlparse(pdf_file)
             if result.scheme and result.netloc:
-                data["uploadFileURL"] = pdf_file
+                files["uploadFileURL"] = (None,pdf_file)
         except AttributeError:
             pass
 
-        if 'uploadFileURL' not in data:
+        if 'uploadFileURL' not in files:
             pdf_handle = open(pdf_file, "rb")
             files = {
                 "input": (
@@ -297,7 +299,7 @@ class GrobidClient(ApiClient):
 
         try:
             res, status = self.post(
-                url=url, files=files, data=data, headers={"Accept": "text/plain"}, timeout=self.config['timeout']
+                url=url, files=files, data=data, headers=headers, timeout=self.config['timeout']
             )
 
             if status == 503:
@@ -314,10 +316,10 @@ class GrobidClient(ApiClient):
                     segment_sentences
                 )
         except requests.exceptions.ReadTimeout:
-            pdf_handle.close()
+            if pdf_handle: pdf_handle.close()
             return (pdf_file, 408, None)
 
-        pdf_handle.close()
+        if pdf_handle: pdf_handle.close()
         return (pdf_file, status, res.text)
 
     def process_pdf_mem(
